@@ -1,2 +1,39 @@
 pool:
   vmImage: 'Ubuntu-16.04'
+  demands: 
+    - 'npm'
+
+steps:
+  - task: DotNetCoreInstaller@0
+    displayName: 'Use .NET Core SDK 2.1.505'
+    inputs:
+      version: 2.1.505
+
+
+  - task: Npm@1
+    displayName: 'Run NPM Install'
+    inputs:
+      verbose: false
+
+  - script: './node_modules/.bin/node-sass Tailspin.SpaceGame.Web/wwwroot --output Tailspin.SpaceGame.Web/wwwroot'
+    displayName: 'Compile SASS Assets'
+
+  - task: Gulp@1
+    displayName: 'Run Gulp Task'
+  
+  - script: 'echo "$(Build.BuildDefinitionName), $(Build.BuildId), $(Build.BuildNumber)" > buildInfo.txt'
+    displayName: 'Write Build Info'
+    workingDirectory: Tailspin.SpaceGame.Web/wwwroot
+
+  - task: DotNetCoreCLI@2
+    displayName: 'Restore Project Dependencies'
+    inputs:
+      command: 'restore'
+      projects: '**/*.csproj'
+
+  - task: DotNetCoreCLI@2
+    displayName: 'Build the project for Release'
+    inputs:
+      command: 'build'
+      arguments: '--no-restore  --configuration Release'
+      projects: '**/*.csproj'
